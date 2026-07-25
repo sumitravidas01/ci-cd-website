@@ -1,0 +1,70 @@
+pipeline {
+    agent any
+
+    environment {
+        IMAGE_NAME = "cicd-image"
+        CONTAINER_NAME = "cicd-container"
+        PORT = "8081"
+    }
+
+    stages {
+
+        stage('Stop Old Container') {
+            steps {
+                bat '''
+                docker stop %CONTAINER_NAME% || exit /b 0
+                '''
+            }
+        }
+
+        stage('Remove Old Container') {
+            steps {
+                bat '''
+                docker rm %CONTAINER_NAME% || exit /b 0
+                '''
+            }
+        }
+
+        stage('Remove Old Image') {
+            steps {
+                bat '''
+                docker rmi %IMAGE_NAME% || exit /b 0
+                '''
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                bat '''
+                docker build -t %IMAGE_NAME% -f Docker\\Dockerfile .
+                '''
+            }
+        }
+
+        stage('Run Docker Container') {
+            steps {
+                bat '''
+                docker run -d --name %CONTAINER_NAME% -p %PORT%:80 %IMAGE_NAME%
+                '''
+            }
+        }
+
+        stage('Verify Deployment') {
+            steps {
+                bat '''
+                docker ps
+                '''
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Deployment Successful!'
+        }
+
+        failure {
+            echo 'Deployment Failed!'
+        }
+    }
+}
