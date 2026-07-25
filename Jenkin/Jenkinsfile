@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "cicd-image"
-        CONTAINER_NAME = "cicd-container"
+        IMAGE_NAME = "ci-cd-image"
+        CONTAINER_NAME = "ci-cd-container"
         PORT = "8081"
     }
 
