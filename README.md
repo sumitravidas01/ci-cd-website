@@ -118,7 +118,7 @@ See the actual `Jenkinsfile` below — it checks out the code, builds the image,
 In your GitHub repo: **Settings → Webhooks → Add webhook**
 
 ```
-Payload URL: http://<jenkins-server>:8080/github-webhook/
+Payload URL: https://gray-swimwear-waking.ngrok-free.dev/github-webhook/
 Content type: application/json
 Trigger: Just the push event
 ```
@@ -130,17 +130,13 @@ Every push now automatically triggers the pipeline.
 ## 📄 Dockerfile
 
 ```dockerfile
-FROM nginx:alpine
-
-# Remove default nginx static assets
-RUN rm -rf /usr/share/nginx/html/*
+FROM nginx:latest
 
 # Copy our static site into nginx's serving directory
 COPY . /usr/share/nginx/html
 
 EXPOSE 80
 
-CMD ["nginx", "-g", "daemon off;"]
 ```
 
 ---
@@ -152,52 +148,73 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "static-website"
-        CONTAINER_NAME = "static-website"
-        PORT = "8080"
+        IMAGE_NAME = "ci-cd-image"
+        CONTAINER_NAME = "ci-cd-container"
+        PORT = "8081"
     }
 
     stages {
-        stage('Checkout') {
+
+        stage('Stop Old Container') {
             steps {
-                checkout scm
+                bat '''
+                docker stop %CONTAINER_NAME% || exit /b 0
+                '''
+            }
+        }
+
+        stage('Remove Old Container') {
+            steps {
+                bat '''
+                docker rm %CONTAINER_NAME% || exit /b 0
+                '''
+            }
+        }
+
+        stage('Remove Old Image') {
+            steps {
+                bat '''
+                docker rmi %IMAGE_NAME% || exit /b 0
+                '''
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $IMAGE_NAME .'
+                bat '''
+                docker build -t %IMAGE_NAME% -f Docker\\Dockerfile .
+                '''
             }
         }
 
-        stage('Stop Existing Container') {
+        stage('Run Docker Container') {
             steps {
-                sh 'docker stop $CONTAINER_NAME || true'
+                bat '''
+                docker run -d --name %CONTAINER_NAME% -p %PORT%:80 %IMAGE_NAME%
+                '''
             }
         }
 
-        stage('Remove Existing Container') {
+        stage('Verify Deployment') {
             steps {
-                sh 'docker rm $CONTAINER_NAME || true'
-            }
-        }
-
-        stage('Run New Container') {
-            steps {
-                sh 'docker run -d -p $PORT:80 --name $CONTAINER_NAME $IMAGE_NAME'
+                bat '''
+                docker ps
+                '''
             }
         }
     }
 
     post {
         success {
-            echo '✅ Deployment successful!'
+            echo 'Deployment Successful!'
         }
+
         failure {
-            echo '❌ Pipeline failed — check logs above.'
+            echo 'Deployment Failed!'
         }
     }
 }
+
 ```
 
 ---
@@ -213,10 +230,13 @@ Source Code → Docker Build → Docker Image → Docker Container → Static We
 ## 📂 Jenkins Pipeline Stages
 
 - Checkout Source Code
-- Build Docker Image
 - Stop Existing Container
 - Remove Existing Container
-- Run New Container
+- Remove Old Image
+- Build Docker Image
+- Run Docker Container
+- Verify Deployment
+- Deployment Successful!
 
 ---
 
@@ -224,20 +244,20 @@ Source Code → Docker Build → Docker Image → Docker Container → Static We
 
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone <https://github.com/sumitravidas01/ci-cd-website.git>
 cd ci-cd-static-website
 
 # Build the Docker image
-docker build -t static-website .
+docker build -t ci-cd-image .
 
 # Run the container
-docker run -d -p 8080:80 --name static-website static-website
+docker run -d -p 8081:80 --name ci-cd-container ci-cd-image
 ```
 
 Then open:
 
 ```
-http://localhost:8080
+http://localhost:8081
 ```
 
 ---
@@ -249,23 +269,14 @@ http://localhost:8080
 3. Push to GitHub.
 4. GitHub sends a webhook event to Jenkins.
 5. Jenkins checks out the latest code.
-6. Docker image is rebuilt.
-7. The old container is stopped and removed.
+6. The old container is stopped and removed.
+7. Docker image is rebuilt.
 8. A new container is started from the fresh image.
 9. The updated website is live — automatically.
 
 ---
 
-## 🧯 Troubleshooting
 
-| Issue | Likely Cause | Fix |
-|---|---|---|
-| Webhook not triggering builds | Jenkins server not reachable from GitHub | Expose Jenkins via a public URL/tunnel (e.g. ngrok) or check firewall rules |
-| `docker: permission denied` in Jenkins logs | Jenkins user lacks Docker access | Add the `jenkins` user to the `docker` group: `sudo usermod -aG docker jenkins` |
-| Port 8080 already in use | Jenkins and the container both default to 8080 | Run the container on a different host port, e.g. `-p 8081:80` |
-| Old container still running after deploy | `docker stop`/`rm` stage failed silently | Check `|| true` isn't masking a real error; inspect with `docker ps -a` |
-
----
 
 ## 📚 Skills Demonstrated
 
@@ -303,20 +314,12 @@ After completing this project, you will understand:
 
 ---
 
-## 📄 License
-
-This project is licensed under the [MIT License](LICENSE).
-
----
-
 ## 👨‍💻 Author
 
 **Sumit Ravidas**
-Aspiring DevOps Engineer
+  DevOps Engineer Intern 
 
-[![GitHub](https://img.shields.io/badge/GitHub-<your--username>-181717?logo=github)](https://github.com/<your-username>)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0A66C2?logo=linkedin)](https://linkedin.com/in/<your-linkedin>)
+[![GitHub](https://github.com/sumitravidas01.git)
 
----
 
-⭐ **If you found this project helpful, consider giving it a star on GitHub — it helps a lot!**
+
