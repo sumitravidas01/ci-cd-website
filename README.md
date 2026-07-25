@@ -96,7 +96,7 @@ git push -u origin main
 Install Jenkins locally or on a server, then verify at:
 
 ```
-http://localhost:8080
+http://localhost:8081
 ```
 
 Complete the setup wizard and install the recommended plugins.
@@ -115,7 +115,7 @@ See the actual `Jenkinsfile` below — it checks out the code, builds the image,
 
 ### Step 7 – Configure GitHub Webhook
 
-In your GitHub repo: **Settings → Webhooks → Add webhook**
+In your GitHub repo: **Settings → ngrok → Webhooks → Add webhook**
 
 ```
 Payload URL: https://gray-swimwear-waking.ngrok-free.dev/github-webhook/
@@ -319,7 +319,7 @@ After completing this project, you will understand:
 **Sumit Ravidas**
   DevOps Engineer Intern 
 
-[![GitHub](https://github.com/sumitravidas01.git)
+[GitHub](https://github.com/sumitravidas01.git)
 
 
 
